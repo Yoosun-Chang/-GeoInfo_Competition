@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>등산 크루 모집하기</title>
+    <style>
+        /* 스타일 코드 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: #d1ecc6;
+            color: black;
+            padding: 10px;
+            margin: 0;
+        }
+
+        .guestbook {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .commentInput {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .commentButton {
+            padding: 10px 20px;
+            background-color: #d1ecc6;
+            color: black;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .commentList {
+            list-style: none;
+            padding: 0;
+        }
+
+        .deleteButton {
+            background-color: #ff6347;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .entryTitle {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .entryName {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧗🏼등산 크루 모집하기🚵🏼</h1>
+
+    <!-- 모집글 작성 폼 -->
+    <div class="guestbook">
+        <h2>✏️새 모집글 작성</h2>
+        <input type="text" class="commentInput" id="title" placeholder="제목을 입력하세요!">
+        <input type="text" class="commentInput" id="name" placeholder="이름을 입력하세요!">
+        <textarea class="commentInput" id="comment" placeholder="크루 모집글을 남겨주세요!"></textarea>
+        <button class="commentButton" onclick="addEntry()">작성</button>
+    </div>
+
+    <!-- 모집글 표시 영역 -->
+    <div id="guestbookEntries"></div>
+
+    <script>
+        // 모집글 데이터 초기화
+        const guestbookData = JSON.parse(localStorage.getItem('guestbookData')) || [];
+
+        // 모집글 작성
+        function addEntry() {
+            const titleInput = document.getElementById('title');
+            const nameInput = document.getElementById('name');
+            const commentInput = document.getElementById('comment');
+            const title = titleInput.value;
+            const name = nameInput.value;
+            const comment = commentInput.value;
+
+            if (title.trim() === '' || name.trim() === '' || comment.trim() === '') {
+                alert('제목, 이름, 내용을 모두 입력하세요.');
+                return;
+            }
+
+            // 모집글 객체 생성
+            const entry = {
+                title: title,
+                name: name,
+                comment: comment,
+                comments: [] // 각 모집글에 대한 댓글 목록
+            };
+
+            // 모집글 데이터에 추가
+            guestbookData.push(entry);
+            localStorage.setItem('guestbookData', JSON.stringify(guestbookData));
+            // 화면에 모집글 업데이트
+            displayEntries();
+
+            // 입력 필드 초기화
+            titleInput.value = '';
+            nameInput.value = '';
+            commentInput.value = '';
+        }
+
+        // 댓글 작성
+        function addComment(entryIndex) {
+            // entryIndex가 유효한지 확인
+            if (entryIndex < 0 || entryIndex >= guestbookData.length) {
+                alert('유효하지 않은 모집글입니다.');
+                return;
+            }
+
+            const nameInput = document.querySelector(`#nameInput${entryIndex}`);
+            const commentInput = document.querySelector(`#commentInput${entryIndex}`);
+            const name = nameInput.value;
+            const commentText = commentInput.value;
+
+            if (name.trim() === '' || commentText.trim() === '') {
+                alert('이름과 댓글을 모두 입력하세요.');
+                return;
+            }
+
+            // 댓글 객체 생성
+            const comment = {
+                name: name,
+                text: commentText
+            };
+
+            // 해당 모집글의 댓글 배열이 정의되어 있는지 확인하고, 정의되어 있지 않으면 초기화
+            if (!guestbookData[entryIndex].comments) {
+                guestbookData[entryIndex].comments = [];
+            }
+
+            // 해당 모집글의 댓글 배열에 댓글 추가
+            guestbookData[entryIndex].comments.push(comment);
+
+            // 화면에 댓글 업데이트
+            displayComments(entryIndex);
+
+            // 입력 필드 초기화
+            nameInput.value = '';
+            commentInput.value = '';
+
+            // 로컬 스토리지에 댓글 데이터 업데이트
+            localStorage.setItem('guestbookData', JSON.stringify(guestbookData));
+        }
+
+        // 게시물 삭제
+        function deleteEntry(entryIndex) {
+            // entryIndex가 유효한지 확인
+            if (entryIndex < 0 || entryIndex >= guestbookData.length) {
+                alert('유효하지 않은 모집글입니다.');
+                return;
+            }
+
+            // 해당 게시물을 배열에서 제거
+            guestbookData.splice(entryIndex, 1);
+
+            // 화면에서도 해당 게시물 제거
+            displayEntries();
+
+            // 로컬 스토리지에 업데이트된 데이터 저장
+            localStorage.setItem('guestbookData', JSON.stringify(guestbookData));
+        }
+
+        // 모집글 화면에 표시
+        function displayEntries() {
+            const guestbookEntries = document.getElementById('guestbookEntries');
+            guestbookEntries.innerHTML = '';
+
+            guestbookData.forEach((entry, index) => {
+                const guestbookDiv = document.createElement('div');
+                guestbookDiv.classList.add('guestbook');
+                guestbookDiv.innerHTML = `
+                    <h3 class="entryTitle">${entry.title}</h3>
+                    <p class="entryName">${entry.name}</p>
+                    <p>${entry.comment}</p>
+                    <button class="deleteButton" onclick="deleteEntry(${index})">삭제</button>
+                    <h4>댓글</h4>
+                    <input type="text" class="commentInput" id="nameInput${index}" placeholder="이름을 입력하세요!">
+                    <input type="text" class="commentInput" id="commentInput${index}" placeholder="댓글을 입력하세요">
+                    <button class="commentButton" onclick="addComment(${index})">댓글 작성</button>
+                    <ul class="commentList" id="commentList${index}">
+                        <!-- 댓글이 여기에 나타납니다 -->
+                    </ul>
+                `;
+
+                guestbookEntries.appendChild(guestbookDiv);
+
+                // 페이지 로드 시 댓글을 표시
+                displayComments(index);
+            });
+        }
+
+        // 댓글 화면에 표시
+        function displayComments(entryIndex) {
+            const commentList = document.querySelector(`#commentList${entryIndex}`);
+            commentList.innerHTML = '';
+
+            if (guestbookData[entryIndex].comments) {
+                guestbookData[entryIndex].comments.forEach(comment => {
+                    const li = document.createElement('li');
+                    li.textContent = `${comment.name}: ${comment.text}`;
+                    commentList.appendChild(li);
+                });
+            }
+        }
+
+        // 페이지 로드 시 초기 데이터 표시
+        displayEntries();
+    </script>
+</body>
+</html>
